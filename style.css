@@ -31,7 +31,7 @@ body {
 /* ===== Header / Banner ===== */
 header {
   background: radial-gradient(circle at top left, var(--pink), var(--peach));
-  border-bottom: 4px solid var(--aqua);
+  /* border-bottom: 4px solid var(--aqua); */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
   position: relative;
   overflow: hidden;
