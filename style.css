@@ -30,6 +30,7 @@ body {
 
 /* ===== Header / Banner ===== */
 header {
+  width: 100%;
   background: radial-gradient(circle at top left, var(--pink), var(--peach));
   /* border-bottom: 4px solid var(--aqua); */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
@@ -60,10 +61,9 @@ header::after {
 
 header img {
   width: 100%;
-  max-width: 1200px;
+  max-width: none;   /* allow full bleed */
   height: auto;
   display: block;
-  margin: 0 auto;
 }
 
 /* ===== Main Layout ===== */
