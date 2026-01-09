@@ -1,20 +1,275 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Binary Board Pixel Art- HHPMS STEAM Club 2025–2026</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>Binary Board – HHPMS STEAM Club 2025–2026</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    :root {
+      --pixel-size: 16px;
+      --gap: 2px;
+    }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #111;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    main {
+      max-width: 900px;
+      width: 100%;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    /* =========================
+       PIXEL DISPLAY
+       ========================= */
+    .display {
+      display: grid;
+      grid-template-columns: repeat(32, var(--pixel-size));
+      grid-template-rows: repeat(8, var(--pixel-size));
+      gap: var(--gap);
+      justify-content: center;
+      margin: 20px auto 30px;
+    }
+
+    .pixel {
+      width: var(--pixel-size);
+      height: var(--pixel-size);
+      background: black;
+    }
+
+    /* Color classes */
+    .black { background: black; }
+    .brown { background: #7a4a2e; }
+    .yellow { background: #ffd400; }
+    .green { background: #00b050; }
+    .blue { background: #0070c0; }
+    .white { background: #ffffff; }
+
+    /* =========================
+       BINARY CONTROLS
+       ========================= */
+    .binary-board {
+      display: grid;
+      grid-template-columns: repeat(8, auto);
+      gap: 10px 12px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .bit {
+      width: 44px;
+      height: 44px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      background: #333;
+      color: #fff;
+    }
+
+    .bit.on {
+      background: #00b050;
+      color: #000;
+    }
+
+    .row-label {
+      grid-column: span 8;
+      font-size: 14px;
+      opacity: 0.8;
+      margin-bottom: -6px;
+    }
+  </style>
 </head>
 
 <body>
+<main>
+  <h1>Binary Board</h1>
+  <p><i>Toggle bits to spell a 4-letter ASCII word</i></p>
 
-  <main>
-    <h1>Binary Board</h1>
-    <p>
-     <i>Coming Soon</i>
-    </p>
-  </main>
+  <!-- Pixel Display -->
+  <div id="display" class="display"></div>
 
+  <!-- Binary Input -->
+  <div id="binaryBoard" class="binary-board"></div>
+</main>
+
+<script>
+/* ============================================================
+   DISPLAY SETUP
+   ============================================================ */
+const display = document.getElementById("display");
+const pixels = [];
+
+for (let i = 0; i < 256; i++) {
+  const p = document.createElement("div");
+  p.className = "pixel black";
+  display.appendChild(p);
+  pixels.push(p);
+}
+
+/* ============================================================
+   BINARY INPUT SETUP
+   ============================================================ */
+const binaryBoard = document.getElementById("binaryBoard");
+const bits = [];
+
+for (let row = 0; row < 4; row++) {
+  const label = document.createElement("div");
+  label.className = "row-label";
+  label.textContent = `Letter ${row + 1}`;
+  binaryBoard.appendChild(label);
+
+  for (let col = 0; col < 8; col++) {
+    const btn = document.createElement("button");
+    btn.className = "bit";
+    btn.textContent = "0";
+    btn.dataset.value = "0";
+
+    btn.onclick = () => {
+      btn.dataset.value = btn.dataset.value === "0" ? "1" : "0";
+      btn.textContent = btn.dataset.value;
+      btn.classList.toggle("on");
+      updateDisplay();
+    };
+
+    bits.push(btn);
+    binaryBoard.appendChild(btn);
+  }
+}
+
+/* ============================================================
+   ASCII + FONT RENDERING
+   (simple 8x8 block letters)
+   ============================================================ */
+function getWord() {
+  let word = "";
+  for (let r = 0; r < 4; r++) {
+    const byte = bits
+      .slice(r * 8, r * 8 + 8)
+      .map(b => b.dataset.value)
+      .join("");
+    word += String.fromCharCode(parseInt(byte, 2) || 32);
+  }
+  return word;
+}
+
+function renderText(word) {
+  clearDisplay();
+  for (let i = 0; i < word.length; i++) {
+    drawChar(word[i], i * 8);
+  }
+}
+
+function drawChar(char, offsetX) {
+  const code = char.charCodeAt(0);
+  for (let y = 0; y < 8; y++) {
+    for (let x = 0; x < 8; x++) {
+      const on = (code >> (7 - x)) & 1;
+      if (on) {
+        setPixel(y, offsetX + x, "white");
+      }
+    }
+  }
+}
+
+/* ============================================================
+   PIXEL HELPERS
+   ============================================================ */
+function setPixel(row, col, color) {
+  pixels[row * 32 + col].className = `pixel ${color}`;
+}
+
+function clearDisplay() {
+  pixels.forEach(p => p.className = "pixel black");
+}
+
+function renderFrame(frame, palette) {
+  clearDisplay();
+  frame.forEach((val, i) => {
+    if (val !== "0") {
+      pixels[i].className = `pixel ${palette[val]}`;
+    }
+  });
+}
+
+/* ============================================================
+   SPECIAL WORDS & ANIMATIONS
+   ============================================================ */
+const specials = {
+  "PEEL": {
+    frames: [
+      [
+        0,0,0,0,0,0,0,0,0,"b",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,"g",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,"y","g",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,"y","y","y","y","y","y","y","y",0,0,0,"y","y",0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,"y","y","y","y","y","y","y","y","y","y","y","y","y",0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,"y","y","y","y","y","y","y","y","y","y","y","y",0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,"y","y","y","y","y","y","y","y","y","y","y",0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,"y","y","y","y","y","y","y","y",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+      ]
+    ],
+    palette: { b: "brown", g: "green", y: "yellow" }
+  },
+
+  "BOLT": {
+    frames: [FRAME1, FRAME2, FRAME3],
+    palette: { B: "blue", W: "white", Y: "yellow", G: "green" }
+  }
+};
+
+/* ============================================================
+   UPDATE LOGIC
+   ============================================================ */
+let playing = false;
+
+function updateDisplay() {
+  if (playing) return;
+
+  const word = getWord();
+  renderText(word);
+
+  if (specials[word]) {
+    playSpecial(word);
+  }
+}
+
+function playSpecial(word) {
+  const special = specials[word];
+  playing = true;
+
+  // show word for 1s
+  setTimeout(() => {
+    let frameIndex = 0;
+    const interval = setInterval(() => {
+      renderFrame(special.frames[frameIndex], special.palette);
+      frameIndex++;
+
+      if (frameIndex >= special.frames.length) {
+        clearInterval(interval);
+        setTimeout(() => {
+          playing = false;
+          renderText(word);
+        }, 1000);
+      }
+    }, 1000);
+  }, 1000);
+}
+
+updateDisplay();
+</script>
 </body>
 </html>
