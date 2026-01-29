@@ -91,21 +91,137 @@
       opacity: 0.8;
       margin-bottom: -6px;
     }
+    .helper-row{
+      margin-top: 14px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .helper-btn{
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: none;
+      background: #333;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .helper-btn:hover{ filter: brightness(1.1); }
+
+    /* Modal */
+    .modal{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 999;
+    }
+    .hidden{ display: none; }
+
+    .modal-card{
+      width: min(720px, 100%);
+      background: #1b1b1b;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 14px;
+      text-align: left;
+    }
+
+    .modal-header{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .modal-header h2{
+      font-size: 18px;
+      margin: 0;
+    }
+
+    .modal-close{
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: none;
+      background: #333;
+      color: #fff;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .ascii-table{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 16px;
+      padding: 10px 0 6px;
+    }
+
+    .ascii-row{
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 6px 10px;
+      border: 1px solid #2d2d2d;
+      border-radius: 10px;
+      background: #141414;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    .ascii-row span{
+      white-space: nowrap;
+    }
+
+    .modal-footer{
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
   </style>
 </head>
 
 <body>
 <main>
   <h1>Binary Board</h1>
-  <p><i>Toggle bits to spell a 4-letter ASCII word. Use All-Caps!</i></p>
+  <p><i>Toggle bits to spell a 4-letter ASCII word. Use All-Caps! Spelling special words will show pixel art created by our students! Try PEEL or BOLT!</i></p>
 
   <!-- Pixel Display -->
   <div id="display" class="display"></div>
 
   <!-- Binary Input -->
   <div id="binaryBoard" class="binary-board"></div>
-  <br>
-  <p><i>Spelling special words will show pixel art created by our students! Try PEEL or BOLT!</i></p>
+  <!-- Binary Input -->
+  <div id="binaryBoard" class="binary-board"></div>
+
+  <!-- ASCII helper button -->
+  <div class="helper-row">
+    <button id="asciiHelpBtn" class="helper-btn" type="button">
+      ASCII A–Z (Binary)
+    </button>
+  </div>
+
+  <!-- ASCII popup -->
+  <div id="asciiModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="asciiTitle">
+      <div class="modal-header">
+        <h2 id="asciiTitle">Capital Letters → ASCII Binary</h2>
+        <button id="asciiCloseBtn" class="modal-close" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div id="asciiTable" class="ascii-table"></div>
+
+      <div class="modal-footer">
+        <button id="asciiDoneBtn" class="helper-btn" type="button">Done</button>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <script>
@@ -323,12 +439,12 @@ const FONT_8x8 = {
 
 "T": [
   0b11111110, // #######.
-  0b00111000, // ..###...
-  0b00111000, // ..###...
-  0b00111000, // ..###...
-  0b00111000, // ..###...
-  0b00111000, // ..###...
-  0b00111000, // ..###...
+  0b00110000, // ..##....
+  0b00110000, // ..##....
+  0b00110000, // ..##....
+  0b00110000, // ..##....
+  0b00110000, // ..##....
+  0b00110000, // ..##....
   0b00000000  // ........
 ],
 
@@ -560,10 +676,9 @@ const specials = {
   "G","G","G","G","G","G","G","G","G","G","G","G","G","G","G","G","G","G","G","G","G","G","G","G","G","G","G","G","G","G","G","G"
 
       ]
-    ]
+    ],
+   palette: { B: "blue", W: "white", Y: "yellow", G: "green" }
   },
-    palette: { B: "blue", W: "white", Y: "yellow", G: "green" }
- 
 };
 
 /* ============================================================
@@ -586,9 +701,28 @@ function playSpecial(word) {
   const special = specials[word];
   playing = true;
 
-  // show word for 1s
+  const isSingleFrame = special.frames.length === 1;
+  const frameDuration = 1000;                 // normal per-frame timing
+  const singleFrameHold = frameDuration * 2;  // pixel art holds 2x longer
+
+  // show word for 1s (unchanged)
   setTimeout(() => {
     let frameIndex = 0;
+
+    // show the first frame immediately (no extra waiting)
+    renderFrame(special.frames[frameIndex], special.palette);
+    frameIndex++;
+
+    // If only 1 frame, just hold it longer, then return to text
+    if (isSingleFrame) {
+      setTimeout(() => {
+        playing = false;
+        renderText(word);
+      }, singleFrameHold);
+      return;
+    }
+
+    // Otherwise animate remaining frames at normal speed
     const interval = setInterval(() => {
       renderFrame(special.frames[frameIndex], special.palette);
       frameIndex++;
@@ -598,11 +732,68 @@ function playSpecial(word) {
         setTimeout(() => {
           playing = false;
           renderText(word);
-        }, 1000);
+        }, frameDuration);
       }
-    }, 1000);
+    }, frameDuration);
+
   }, 1000);
 }
+
+
+/* ============================================================
+   ASCII A–Z POPUP
+   ============================================================ */
+const asciiHelpBtn = document.getElementById("asciiHelpBtn");
+const asciiModal = document.getElementById("asciiModal");
+const asciiCloseBtn = document.getElementById("asciiCloseBtn");
+const asciiDoneBtn = document.getElementById("asciiDoneBtn");
+const asciiTable = document.getElementById("asciiTable");
+
+function byteToBin8(n) {
+  return n.toString(2).padStart(8, "0");
+}
+
+function buildAsciiTableAZ() {
+  asciiTable.innerHTML = "";
+  for (let code = 65; code <= 90; code++) { // A..Z
+    const ch = String.fromCharCode(code);
+    const bin = byteToBin8(code);
+
+    const row = document.createElement("div");
+    row.className = "ascii-row";
+    row.innerHTML = `<span>${ch}</span><span>${bin}</span>`;
+    asciiTable.appendChild(row);
+  }
+}
+
+function openAsciiModal() {
+  buildAsciiTableAZ();
+  asciiModal.classList.remove("hidden");
+  asciiModal.setAttribute("aria-hidden", "false");
+}
+
+function closeAsciiModal() {
+  asciiModal.classList.add("hidden");
+  asciiModal.setAttribute("aria-hidden", "true");
+}
+
+asciiHelpBtn.addEventListener("click", openAsciiModal);
+asciiCloseBtn.addEventListener("click", closeAsciiModal);
+asciiDoneBtn.addEventListener("click", closeAsciiModal);
+
+// close if user clicks the dark backdrop
+asciiModal.addEventListener("click", (e) => {
+  if (e.target === asciiModal) closeAsciiModal();
+});
+
+// Esc to close
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !asciiModal.classList.contains("hidden")) {
+    closeAsciiModal();
+  }
+});
+
+
 
 updateDisplay();
 </script>
