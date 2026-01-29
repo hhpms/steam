@@ -113,6 +113,55 @@
 const display = document.getElementById("display");
 const pixels = [];
 
+
+
+
+const FONT_8x8 = {
+  "P": [
+    0b11111110,
+    0b10000001,
+    0b10000001,
+    0b11111110,
+    0b10000000,
+    0b10000000,
+    0b10000000,
+    0b00000000
+  ],
+  "E": [
+    0b11111111,
+    0b10000000,
+    0b10000000,
+    0b11111110,
+    0b10000000,
+    0b10000000,
+    0b11111111,
+    0b00000000
+  ],
+  "L": [
+    0b10000000,
+    0b10000000,
+    0b10000000,
+    0b10000000,
+    0b10000000,
+    0b10000000,
+    0b11111111,
+    0b00000000
+  ],
+  " ": Array(8).fill(0)
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
 for (let i = 0; i < 256; i++) {
   const p = document.createElement("div");
   p.className = "pixel black";
@@ -174,16 +223,17 @@ function renderText(word) {
 }
 
 function drawChar(char, offsetX) {
-  const code = char.charCodeAt(0);
+  const glyph = FONT_8x8[char] || FONT_8x8[" "];
+
   for (let y = 0; y < 8; y++) {
     for (let x = 0; x < 8; x++) {
-      const on = (code >> (7 - x)) & 1;
-      if (on) {
+      if ((glyph[y] >> (7 - x)) & 1) {
         setPixel(y, offsetX + x, "white");
       }
     }
   }
 }
+
 
 /* ============================================================
    PIXEL HELPERS
@@ -211,7 +261,6 @@ function renderFrame(frame, palette) {
 const specials = {
   "PEEL": {
     frames: [
-      [
         0,0,0,0,0,0,0,0,0,"b",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,"g",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,"y","g",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -220,8 +269,7 @@ const specials = {
         0,0,0,0,0,0,0,0,"y","y","y","y","y","y","y","y","y","y","y","y",0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,"y","y","y","y","y","y","y","y","y","y","y",0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,"y","y","y","y","y","y","y","y",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-      ]
-    ],
+      ],
     palette: { b: "brown", g: "green", y: "yellow" }
   },
 
@@ -263,7 +311,7 @@ const specials = {
     ]
   },
     palette: { B: "blue", W: "white", Y: "yellow", G: "green" }
-  }
+ 
 };
 
 /* ============================================================
